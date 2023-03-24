@@ -5,23 +5,24 @@
 #include <stdbool.h>
 #include <time.h>
 #include <assert.h>
+
 #define LARGEUR 800
 #define HAUTEUR 600
 #define COULEUR_ALEA al_map_rgb(rand()%256, rand()%256, rand()%256)
 #define RED al_map_rgb(255, 0, 0)
 
-enum{
-    GAUCHE,
-    DROITE,
-    HAUT,
-    BAS,
+enum {
+    GAUCHE, // 0
+    DROITE, // 1
+    HAUT,   // 2
+    BAS,    // 3
 };
 
 typedef struct {
     int x, y, largeur, hauteur;
 } Rect;
 
-void centrerRectangle(Rect* r, int largeur, int hauteur) {
+void centrerRectangle(Rect *r, int largeur, int hauteur) {
     r->largeur = largeur;
     r->hauteur = hauteur;
     r->x = LARGEUR / 2 - r->largeur / 2;
@@ -29,18 +30,18 @@ void centrerRectangle(Rect* r, int largeur, int hauteur) {
 }
 
 void dessiner(Rect r) {
-    al_clear_to_color(al_map_rgb(255,255,255));
-    al_draw_filled_rectangle(r.x, r.y, r.x+r.largeur, r.y+r.hauteur, RED);
+    al_clear_to_color(al_map_rgb(255, 255, 255));
+    al_draw_filled_rectangle(r.x, r.y, r.x + r.largeur, r.y + r.hauteur, COULEUR_ALEA);
     al_flip_display();
 }
 
 int main() {
     // definitions
     bool fini = false;
-    Rect rectangle= {0};
-    ALLEGRO_EVENT_QUEUE* fifo = NULL;
-    ALLEGRO_DISPLAY* fenetre = NULL;
-    ALLEGRO_TIMER * timer = NULL;
+    Rect rectangle = {0};
+    ALLEGRO_EVENT_QUEUE *fifo = NULL;
+    ALLEGRO_DISPLAY *fenetre = NULL;
+    ALLEGRO_TIMER *timer = NULL;
     ALLEGRO_EVENT event;
     bool TE[4] = {false};
 
@@ -61,7 +62,7 @@ int main() {
     // al_set_window_position(fenetre, 0, 0);
 
     // timer
-    timer = al_create_timer(1.0/24.0);
+    timer = al_create_timer(1.0 / 10.0);
     al_start_timer(timer);
 
     // file fifo
@@ -73,53 +74,55 @@ int main() {
     // premier affichage
     dessiner(rectangle);
 
-    while(!fini) {
+    while (!fini) {
         al_wait_for_event(fifo, &event);
         //printf("On vient de piocher un event de type %d.\n", event.type);
-        switch(event.type) {
+        switch (event.type) {
             case ALLEGRO_EVENT_DISPLAY_CLOSE: { // 42
                 fini = true;
                 break;
             }
             case ALLEGRO_EVENT_KEY_DOWN: { // 10
-                if(event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
                     TE[BAS] = true;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_UP) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_UP) {
                     TE[HAUT] = true;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_RIGHT) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT) {
                     TE[DROITE] = true;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_LEFT) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_LEFT) {
                     TE[GAUCHE] = true;
                 }
                 break;
             }
-            case ALLEGRO_KEY_UP:
-                if(event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
+            case ALLEGRO_EVENT_KEY_UP:
+                if (event.keyboard.keycode == ALLEGRO_KEY_DOWN) {
                     TE[BAS] = false;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_UP) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_UP) {
                     TE[HAUT] = false;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_RIGHT) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT) {
                     TE[DROITE] = false;
                 }
-                if(event.keyboard.keycode == ALLEGRO_KEY_LEFT) {
+                if (event.keyboard.keycode == ALLEGRO_KEY_LEFT) {
                     TE[GAUCHE] = false;
                 }
                 break;
             case ALLEGRO_EVENT_TIMER:
-                if(TE[BAS]){
-                    if((rectangle.y+rectangle.hauteur) < HAUTEUR){
-                        rectangle.y += 10;
+                if (TE[BAS]) {
+                    rectangle.y += 10;
+                    if ((rectangle.y + rectangle.hauteur) > HAUTEUR) {
+                        rectangle.y = HAUTEUR - rectangle.hauteur;
                     }
                 }
-                if(TE[HAUT]){
-
-                        rectangle.y -= 10;
-
+                if (TE[HAUT]) {
+                    rectangle.y -= 10;
+                    if (rectangle.y < 0) {
+                        rectangle.y = 0;
+                    }
                 }
                 dessiner(rectangle);
                 break;
@@ -130,9 +133,10 @@ int main() {
 
     }
 
-    dessiner(rectangle);
-
+    // liberation
     al_destroy_display(fenetre);
+    al_destroy_event_queue(fifo);
+    al_destroy_timer(timer);
 
     return 0;
 }
